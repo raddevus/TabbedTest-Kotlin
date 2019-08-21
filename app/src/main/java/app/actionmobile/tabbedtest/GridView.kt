@@ -35,12 +35,15 @@ class GridView(private val _context: Context) : View(_context) {
     var cellSize: Int = 0 //125
     var vx: View
 
+    //public var UserPath = UserPath
 
-    //if (userPath == null || userPath.allSegments == null){return false;}
+    //if (UserPath == null || UserPath.allSegments == null){return false;}
     val isLineSegmentComplete: Boolean
         get() {
-            Log.d("MainActivity", "size ; " + userPath.name)
-            return true //java.lang.Boolean.valueOf(userPath.allSegments.size > 0)
+            Log.d("MainActivity", "size ; " + UserPath.allSegments.size.toString())
+            Log.d("MainActivity", "size ; " + UserPath.allSegments.size.toString())
+            Log.d("MainActivity", "size ; " + UserPath.allPoints.size.toString())
+            return java.lang.Boolean.valueOf(UserPath.allSegments.size > 0)
         }
 
     init {
@@ -58,7 +61,7 @@ class GridView(private val _context: Context) : View(_context) {
         Log.d("MainActivity", "viewHeight : $viewHeight")
 
         vx = this.rootView
-
+        GridView.gv = this;
         Log.d("MainActivity", "id: " + vx.id.toString())
         //postWidth = ((viewWidth / 2) / 6) /5;
         postWidth = viewWidth / 58
@@ -87,20 +90,12 @@ class GridView(private val _context: Context) : View(_context) {
                 currentPoint = Point(touchX, touchY)
                 if (SelectNewPoint(currentPoint!!)) {
                     v.invalidate()
-                    //userPath.CalculateGeometricValue()
+                    UserPath.CalculateGeometricValue()
                     GeneratePassword()
                 }
             }
             true
         })
-    }
-
-    fun ClearGrid() {
-        if (!isPatternHidden) {
-            userPath.init()
-        }
-        invalidate()
-        vx.invalidate()
     }
 
     private fun DrawUserShape(canvas: Canvas) {
@@ -109,7 +104,7 @@ class GridView(private val _context: Context) : View(_context) {
         paint.strokeWidth = 8f
         paint.style = Paint.Style.STROKE
 
-        /*for (s in userPath.allSegments) {
+        for (s in UserPath.allSegments) {
             canvas.drawCircle(
                 s.Begin.x.toFloat(),
                 s.Begin.y.toFloat(),
@@ -121,7 +116,7 @@ class GridView(private val _context: Context) : View(_context) {
                 s.End.y.toFloat(), paint
             )
             //            Log.d("MainActivity", "DONE drawing line...");
-        }*/
+        }
 
     }
 
@@ -129,7 +124,7 @@ class GridView(private val _context: Context) : View(_context) {
         Log.d("MainActivity", "DrawHighlight()...")
         Log.d("MainActivity", p.toString())
         val paint = Paint()
-        if (userPath.allPoints.size == 1) {
+        if (UserPath.allPoints.size == 1) {
             paint.color = Color.CYAN
         } else {
             paint.color = Color.BLUE
@@ -147,14 +142,14 @@ class GridView(private val _context: Context) : View(_context) {
 
     private fun SelectNewPoint(p: Point): Boolean {
         val currentPoint = HitTest(Point(p.x, p.y)) ?: return false
-        //userPath.append(currentPoint, hitTestIdx + hitTestIdx * (hitTestIdx / 6) * 10)
-        //userPath.CalculateGeometricValue()
+        UserPath.append(currentPoint, hitTestIdx + hitTestIdx * (hitTestIdx / 6) * 10)
+        UserPath.CalculateGeometricValue()
 
         return true
     }
 
     fun GeneratePassword() {
-
+        CreateHash()
     }
 
     private fun GenerateAllPosts() {
@@ -167,6 +162,64 @@ class GridView(private val _context: Context) : View(_context) {
                 Log.d("Extra", "Point.y = " + (topOffset + centerPoint * y).toString())
             }
         }
+    }
+
+    //@TargetApi(19)
+    private fun CreateHash() {
+    var currentSiteKey = "supersite"
+        //String site = MainActivity.siteKey.getText().toString();  //"amazon";
+//        if (MainActivity.currentSiteKey == null) {
+//            MainActivity.SetPassword("")
+//            return
+//        }
+//        if (!isLineSegmentComplete) {
+//            MainActivity.SetPassword("")
+//            return
+//        }
+        // RAD  val currentSiteKey = MainActivity.currentSiteKey
+        Log.d("MainActivity", "site: " + currentSiteKey.toString())
+        val text = "${UserPath.PointValue}${currentSiteKey}"
+        try {
+            val digest = MessageDigest.getInstance("SHA-256")
+            val hash = digest.digest(text.toByteArray(Charset.forName("UTF-8")))
+            var sb = StringBuilder()
+            for (b in hash) {
+                sb.append(String.format("%02x", b))
+            }
+//            if (currentSiteKey!!.isHasSpecialChars) {
+//                // yes, I still get the special chars from what the user typed on the form
+//                // because I don't store special chars in JSON as a protection
+//                if (MainActivity.specialChars != null && MainActivity.specialChars !== "") {
+//                    sb.insert(2, MainActivity.specialChars)
+//                }
+//            }
+            if ( true){//currentSiteKey!!.isHasUpperCase) {
+                Log.d("MainActivity", "calling addUpperCase()")
+                val firstLetterIndex = addUpperCase(sb.toString())
+                Log.d("MainActivity", "firstLetterIndex : $firstLetterIndex")
+                if (firstLetterIndex >= 0) {
+                    // get the string, uppercase it, get the uppercased char at location
+                    Log.d("MainActivity", "calling sb.setCharAt()")
+                    Log.d("MainActivity", "value : " + sb.toString().toUpperCase()[firstLetterIndex].toString())
+                    sb.setCharAt(firstLetterIndex, sb.toString().toUpperCase()[firstLetterIndex])
+                }
+            }
+//            if (currentSiteKey?.maxLength > 0) {
+//                val temp = StringBuilder()
+//                temp.insert(0, sb.substring(0, currentSiteKey!!.maxLength))
+//                sb = temp
+//            }
+            Log.d("MainActivity", sb.toString())
+            // RAD MainActivity.SetPassword(sb.toString())
+
+            val clipboard = _context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("Copied Text", sb.toString())
+            clipboard.primaryClip = clip
+
+        } catch (nsa: NoSuchAlgorithmException) {
+
+        }
+
     }
 
     private fun addUpperCase(sb: String): Int {
@@ -222,8 +275,8 @@ class GridView(private val _context: Context) : View(_context) {
         DrawGridLines()
         if (!isPatternHidden) {
             DrawUserShape(canvas)
-            if (userPath.allPoints.size > 0) {
-                DrawHighlight(userPath.allPoints[0])
+            if (UserPath.allPoints.size > 0) {
+                DrawHighlight(UserPath.allPoints[0])
             }
         }
     }
@@ -236,8 +289,8 @@ class GridView(private val _context: Context) : View(_context) {
         DrawGridLines()
         if (!isPatternHidden) {
             DrawUserShape(canvas)
-            if (userPath.allPoints.size > 0) {
-                DrawHighlight(userPath.allPoints[0])
+            if (UserPath.allPoints.size > 0) {
+                DrawHighlight(UserPath.allPoints[0])
             }
         }
     }
@@ -270,13 +323,14 @@ class GridView(private val _context: Context) : View(_context) {
 
     companion object {
 
-        var userPath = UserPath()
+        //var UserPath = UserPath
         private var isPatternHidden: Boolean = false
-    }
+        private var gv : GridView? = null
 
-    class UserPath{
-        var name : String = "test"
-        internal var allPoints: MutableList<Point> = ArrayList()
-        fun init(){}
+        fun ClearGrid() {
+            UserPath.init()
+            gv!!.vx.invalidate();
+            gv!!.invalidate()
+        }
     }
 }

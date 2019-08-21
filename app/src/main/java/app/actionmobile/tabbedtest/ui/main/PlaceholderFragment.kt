@@ -43,7 +43,7 @@ class PlaceholderFragment : Fragment() {
                 val mainlayout1 = root.findViewById(R.id.drawcross) as LinearLayout
                 var gv = app.actionmobile.tabbedtest.GridView(root.context)
                 mainlayout1.addView(gv, gv!!.cellSize * 7, gv!!.cellSize * 7)
-                mainlayout1.setBackgroundColor(ContextCompat.getColor(root.context, R.color.colorPrimary));
+                mainlayout1.setBackgroundColor(ContextCompat.getColor(root.context, R.color.white));
             }
             2 -> {
 
